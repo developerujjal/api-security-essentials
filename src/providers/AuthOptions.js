@@ -1,7 +1,8 @@
 import CredentialsProvider from "next-auth/providers/credentials"
+import GoogleProvider from "next-auth/providers/google";
 
 
-const authOptions = {
+export const authOptions = {
     providers: [
         CredentialsProvider({
             name: "Credentials",
@@ -20,23 +21,42 @@ const authOptions = {
                 }
             },
         }),
+        GoogleProvider({
+            clientId: process.env.GOOGLE_CLIENT_ID,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET
+        })
     ],
     session: {
         strategy: "jwt", // Uses JWT by default
     },
+    pages: {
+        signIn: '/sign-in',
+    },
     callbacks: {
         async jwt({ token, user }) {
+            // if (user) {
+            //     token.id = user.id;
+            //     token.email = user.email;
+            // }
+
             if (user) {
-                token.id = user.id;
-                token.email = user.email;
+                token.role = 'user';
+                token.id = user?.id
+
             }
+
+            console.log("TOKEN: ", token)
+            console.log("USER: ", user)
             return token;
         },
         async session({ session, token }) {
             session.user.id = token.id;
             session.user.email = token.email;
+            session.user.role = token?.role
             return session;
         },
     },
     secret: process.env.NEXTAUTH_SECRET,
 }
+
+
